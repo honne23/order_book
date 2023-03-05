@@ -15,6 +15,11 @@ path = "src/lib.rs"
 tokio = {version="1.26.0", features=["macros", "rt-multi-thread"]}
 tonic = "0.8.3"
 prost = "0.11.8"
+async-trait = "0.1.53"
+log = "0.4.17"
+serde = "1.0.152"
+serde_json = "1.0.93"
+async-tungstenite = {version="0.20.0", features=["tokio-runtime"]}
 
 [build-dependencies]
 tonic-build = "0.7"
