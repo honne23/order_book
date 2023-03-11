@@ -1,4 +1,5 @@
 use std::{error::Error, num::ParseFloatError, pin::Pin};
+use std::hash::Hash;
 
 use async_trait::async_trait;
 use serde::{de, Deserialize, Deserializer};
@@ -15,19 +16,28 @@ pub enum ExchangeType {
     Bitstamp,
 }
 
-pub(crate) type SnapshotStream = Pin<Box<dyn Stream<Item = Result<FeedSnapshot, Box<dyn Error + Send + Sync>>> + Send>>;
+impl ToString for ExchangeType {
+    fn to_string(&self) -> String {
+        match *self {
+            Self::Binance => String::from("Binance"),
+            Self::Bitstamp => String::from("Bitstamp"),
+            Self::Default => String::from("Default")
+        }
+    }
+}
+
+pub(crate) type SnapshotStream =
+    Pin<Box<dyn Stream<Item = Result<FeedSnapshot, Box<dyn Error + Send + Sync>>> + Send>>;
 
 #[async_trait]
-pub trait Exchange {
-    async fn connect(
-        &self, symbol: String
-    ) -> Result<SnapshotStream, Box<dyn Error>>;
-    
+pub(crate) trait Exchange {
+    async fn connect(&self, symbol: String) -> Result<SnapshotStream, Box<dyn Error>>;
+
     fn name(&self) -> ExchangeType;
 }
 
 #[derive(Deserialize, Debug, Default)]
-pub struct FeedSnapshot {
+pub(crate) struct FeedSnapshot {
     #[serde(deserialize_with = "from_str_floats")]
     pub bids: Vec<[f64; 2]>,
     #[serde(deserialize_with = "from_str_floats")]

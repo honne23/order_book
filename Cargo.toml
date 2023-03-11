@@ -27,4 +27,4 @@ futures = "0.3.26"
 itertools = "0.10.5"
 
 [build-dependencies]
-tonic-build = "0.7"
+tonic-build = "0.8.4"
