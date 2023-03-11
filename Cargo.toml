@@ -7,9 +7,9 @@ edition = "2021"
 name = "orderbook"
 path = "src/lib.rs"
 
-#[bin]
-#name = "orderbook"
-#path = "src/bin.rs"
+[[bin]]
+name = "orderbook"
+path = "src/bin.rs"
 
 [dependencies]
 tokio = {version="1.26.0", features=["macros", "rt-multi-thread"]}

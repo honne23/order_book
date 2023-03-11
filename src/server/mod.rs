@@ -11,16 +11,15 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use crate::exchanges::ExchangeType;
 use crate::orderbook::builder::{OrderbookBuilder, Empty as EmptyOrderbook};
-use crate::orderbook::levels::{BidLevel, AskLevel};
 
-pub struct OrderbookServer {}
+pub struct OrderbookSummaryService {}
 
 #[tonic::async_trait]
-impl OrderbookAggregator for OrderbookServer {
+impl OrderbookAggregator for OrderbookSummaryService {
     type BookSummaryStream = ReceiverStream<Result<Summary, Status>>;
 
     async fn book_summary(&self, _request: Request<Empty>) -> Result<Response<Self::BookSummaryStream>, Status> {
-        let (mut tx, rx) = mpsc::channel::<Result<Summary, Status>>(4);
+        let (tx, rx) = mpsc::channel::<Result<Summary, Status>>(4);
         tokio::spawn(async move {
             let orderbook_builder = OrderbookBuilder::<EmptyOrderbook>::new();
             let mut orderbook = orderbook_builder
@@ -31,7 +30,7 @@ impl OrderbookAggregator for OrderbookServer {
                 .build().await.unwrap();
 
             let orderbook_stream = orderbook.collect();
-            pin_mut!(orderbook_stream); // needed for iteration
+            pin_mut!(orderbook_stream); 
 
             while let Some(value) = orderbook_stream.next().await {
                 let summary_bids = value.0.iter().map(|bid|Level{
