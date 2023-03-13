@@ -5,8 +5,16 @@ service OrderbookAggregator {
     rpc BookSummary(Empty) returns (stream Summary);
 }
 
+enum Exchange {
+    BINANCE = 0;
+    BITSTAMP = 1;
+}
 
-message Empty {}
+
+message Empty {
+    string symbol = 1;
+    repeated Exchange exchanges = 2;
+}
 
 message Summary {
 

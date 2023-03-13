@@ -1,12 +1,26 @@
-use std::{error::Error, num::ParseFloatError, pin::Pin};
 use std::hash::Hash;
+use std::{error::Error, num::ParseFloatError, pin::Pin};
 
 use async_trait::async_trait;
+use async_tungstenite::{stream::Stream, tokio::TokioAdapter, WebSocketStream};
+
 use serde::{de, Deserialize, Deserializer};
-use tokio_stream::Stream;
+
+use tokio::net::TcpStream;
+use tokio_native_tls::TlsStream;
+use tokio_stream::Stream as TokioStream;
+
+use futures::stream::SplitStream;
 
 pub mod binance;
 pub mod bitstamp;
+
+type SecureWebsocketReceiver = SplitStream<
+    WebSocketStream<Stream<TokioAdapter<TcpStream>, TokioAdapter<TlsStream<TcpStream>>>>,
+>;
+
+pub(crate) type SnapshotStream =
+    Pin<Box<dyn TokioStream<Item = Result<FeedSnapshot, Box<dyn Error + Send + Sync>>> + Send>>;
 
 #[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ExchangeType {
@@ -21,13 +35,10 @@ impl ToString for ExchangeType {
         match *self {
             Self::Binance => String::from("Binance"),
             Self::Bitstamp => String::from("Bitstamp"),
-            Self::Default => String::from("Default")
+            Self::Default => String::from("Default"),
         }
     }
 }
-
-pub(crate) type SnapshotStream =
-    Pin<Box<dyn Stream<Item = Result<FeedSnapshot, Box<dyn Error + Send + Sync>>> + Send>>;
 
 #[async_trait]
 pub(crate) trait Exchange {
@@ -37,11 +48,11 @@ pub(crate) trait Exchange {
 }
 
 #[derive(Deserialize, Debug, Default)]
-pub(crate) struct FeedSnapshot {
+pub struct FeedSnapshot {
     #[serde(deserialize_with = "from_str_floats")]
-    pub bids: Vec<[f64; 2]>,
+    pub(crate) bids: Vec<[f64; 2]>,
     #[serde(deserialize_with = "from_str_floats")]
-    pub asks: Vec<[f64; 2]>,
+    pub(crate) asks: Vec<[f64; 2]>,
 }
 
 fn from_str_floats<'de, D>(deserializer: D) -> Result<Vec<[f64; 2]>, D::Error>

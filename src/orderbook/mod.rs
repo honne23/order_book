@@ -1,71 +1,60 @@
-use async_stream::stream;
-use futures::Stream;
-use std::{cmp::Reverse, collections::BinaryHeap, mem};
-use tokio_stream::{StreamExt, StreamMap};
-
-use crate::exchanges::{
-   ExchangeType, SnapshotStream,
-};
-
-use self::levels::{AskLevel, BidLevel};
-pub(crate) mod levels;
 pub mod builder;
+pub mod streaming_book;
+pub(crate) mod levels;
 
+use std::error::Error;
 
+use futures::Stream;
+use tokio_stream::StreamMap;
 
+use crate::exchanges::{ExchangeType, SnapshotStream};
 
-pub struct Orderbook {
-    max_depth: usize,
-    exchange_streams: StreamMap<ExchangeType, SnapshotStream>,
+pub trait Orderbook {
+    type BidOrder: Ord;
+    type AskOrder: Ord;
+
+    fn new(max_depth: usize, exchanges: StreamMap<ExchangeType, SnapshotStream>) -> Self;
+
+    fn collect(
+        &mut self,
+    ) -> impl Stream<Item = Result<(Vec<Self::BidOrder>, Vec<Self::AskOrder>), Box<dyn Error + Send + Sync>>> + '_;
 }
 
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
 
+    use futures::{pin_mut, StreamExt};
 
-impl Orderbook {
-    pub fn collect(&mut self) -> impl Stream<Item = (Vec<BidLevel>, Vec<AskLevel>)> + '_ {
-        let event_stream = stream! {
-            let bid_heap = &mut BinaryHeap::<Reverse<BidLevel>>::with_capacity(self.max_depth + 1);
-            let ask_heap = &mut BinaryHeap::<Reverse<AskLevel>>::with_capacity(self.max_depth + 1); 
-            loop {
-                let (key, val) = self.exchange_streams.next().await.unwrap();
-                let snapshot = val.unwrap();
-                snapshot.bids.iter().for_each(|bid|{
-                    bid_heap.push(Reverse(BidLevel {
-                        price: bid[0],
-                        amount: bid[1],
-                        exchange: key,
-                    }));
-                    if bid_heap.len() > self.max_depth {
-                        bid_heap.pop();
-                    }
-                });
+    use crate::{orderbook::{builder::{OrderbookBuilder, Empty}, streaming_book::HeapedBook, Orderbook}, exchanges::ExchangeType};
 
-                snapshot.asks.iter().for_each(|ask| {
-                    ask_heap.push(Reverse(AskLevel {
-                        price: ask[0],
-                        amount: ask[1],
-                        exchange: key,
-                    }));
-                    if ask_heap.len() > self.max_depth {
-                        ask_heap.pop();
-                    }
-                });
-                // Publish an event the moment an exchange publishes an updated orderbook
-                yield (
-                    bid_heap.clone()
-                        .into_sorted_vec()
-                        .iter_mut()
-                        .map(|x| mem::take(&mut x.0))
-                        .collect::<Vec<BidLevel>>(),
-                    ask_heap.clone()
-                        .into_sorted_vec()
-                        .iter_mut()
-                        .map(|x| mem::take(&mut x.0))
-                        .collect::<Vec<AskLevel>>(),
-                );
+    #[tokio::test]
+    async fn test_orderbook() -> Result<(), Box<dyn Error>> {
+        let orderbook_builder = OrderbookBuilder::<Empty>::new();
+        let mut orderbook = orderbook_builder
+            .with_max_depth(10)
+            .with_symbol("ethbtc")
+            .with_exchanges(&[ExchangeType::Binance, ExchangeType::Bitstamp])
+            .build::<HeapedBook>()
+            .await?;
+        let orderbook_stream = orderbook.collect();
+        pin_mut!(orderbook_stream); // needed for iteration
 
-            }
-        };
-        event_stream
+        while let Some(value) = orderbook_stream.next().await {
+            assert!(value.is_ok());
+            let orders = match value {
+                Ok(orders) => orders,
+                Err(e) => {
+                    println!("ERROR {:?}", e);
+                    continue;
+                }
+            };
+            let spread = orders.1[orders.1.len()-1].price - orders.0[orders.0.len()-1].price;
+            assert!(orders.0.len() == 10);
+            assert!(orders.1.len() == 10);
+            assert!(spread > 0.0);
+            println!("Spread {spread} \n\n");
+        }
+        Ok(())
     }
 }

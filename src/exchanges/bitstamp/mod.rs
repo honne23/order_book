@@ -1,4 +1,4 @@
-use std::{error::Error, mem};
+use std::error::Error;
 
 use async_trait::async_trait;
 use async_tungstenite::{tokio::connect_async, tungstenite::Message};
@@ -6,7 +6,7 @@ use futures::{stream::StreamExt, SinkExt};
 
 use serde::Deserialize;
 
-use super::{Exchange, ExchangeType, FeedSnapshot, SnapshotStream};
+use super::{Exchange, ExchangeType, FeedSnapshot, SecureWebsocketReceiver, SnapshotStream};
 
 static EXCHANGE_URL: &str = "wss://ws.bitstamp.net";
 
@@ -37,8 +37,9 @@ impl Exchange for Bitstamp {
             .ok_or("didn't receive anything")??;
         // Check the msg here
         let (_, mut ws_receiver) = ws_stream.split();
-        let (tx, mut rx) =
-            tokio::sync::mpsc::channel::<Result<FeedSnapshot, Box<dyn Error + Sync + Send>>>(1);
+        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<
+            Result<FeedSnapshot, Box<dyn Error + Sync + Send>>,
+        >();
         let rx = Box::pin(async_stream::stream! {
               while let Some(item) = rx.recv().await {
                   yield item;
@@ -46,14 +47,23 @@ impl Exchange for Bitstamp {
         }) as SnapshotStream;
         tokio::spawn(async move {
             loop {
-                let msg = futures::StreamExt::next(&mut ws_receiver)
-                    .await
-                    .ok_or("didn't receive anything")
-                    .unwrap()
-                    .unwrap();
-                let mut data: BitstampSnapshot =
-                    serde_json::from_str(msg.to_string().as_str()).unwrap();
-                tx.send(Ok(mem::take(&mut data.data))).await.unwrap();
+                // Async closure for more egonomic error handling
+                let channel_result = async move |ws: &mut SecureWebsocketReceiver| -> Result<
+                    FeedSnapshot,
+                    Box<dyn Error + Send + Sync>,
+                > {
+                    let msg = futures::StreamExt::next(ws)
+                        .await
+                        .ok_or("didn't receive anything")??;
+                    let data: BitstampSnapshot = serde_json::from_str(msg.to_string().as_str())?;
+                    Ok(data.data)
+                }(&mut ws_receiver)
+                .await;
+
+                match channel_result {
+                    Err(e) => tx.send(Err(e)).unwrap(),
+                    Ok(snapshot) => tx.send(Ok(snapshot)).unwrap(),
+                };
             }
         });
 
