@@ -37,6 +37,7 @@ impl Exchange for Bitstamp {
             .ok_or("didn't receive anything")??;
         // Check the msg here
         let (_, mut ws_receiver) = ws_stream.split();
+        
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<
             Result<FeedSnapshot, Box<dyn Error + Sync + Send>>,
         >();

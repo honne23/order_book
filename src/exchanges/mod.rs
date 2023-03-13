@@ -42,6 +42,7 @@ impl ToString for ExchangeType {
 
 #[async_trait]
 pub(crate) trait Exchange {
+    /// Initiates a stream of `FeedSnapshot`, which yields an error if the stream gets interrupted
     async fn connect(&self, symbol: String) -> Result<SnapshotStream, Box<dyn Error>>;
 
     fn name(&self) -> ExchangeType;

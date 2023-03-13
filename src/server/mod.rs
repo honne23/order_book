@@ -10,7 +10,11 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use tonic::{Request, Response, Status};
 
 use crate::exchanges::ExchangeType;
-use crate::orderbook::{Orderbook, builder::{Empty as EmptyOrderbook, OrderbookBuilder}, streaming_book::HeapedBook};
+use crate::orderbook::{
+    builder::{Empty as EmptyOrderbook, OrderbookBuilder},
+    streaming_book::HeapedBook,
+    Orderbook,
+};
 
 pub struct OrderbookSummaryService {}
 
@@ -64,7 +68,7 @@ impl OrderbookAggregator for OrderbookSummaryService {
                             .collect::<Vec<Level>>();
 
                         tx.send(Ok(Summary {
-                            spread: summary_asks[summary_asks.len()-1].price - summary_bids[summary_bids.len()-1].price,
+                            spread: summary_asks[0].price - summary_bids[0].price,
                             bids: summary_bids,
                             asks: summary_asks,
                         }))

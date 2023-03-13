@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use crate::exchanges::ExchangeType;
 
+/// A representation of bid levels that can be ordered according to the best deal.
 #[derive(Debug, Default, Copy, Clone)]
 pub struct BidLevel {
     pub price: f64,
@@ -29,6 +30,7 @@ impl PartialEq for BidLevel {
 
 impl Eq for BidLevel {}
 
+/// A representation of ask levels that can be ordered according to the best deal.
 #[derive(Debug, Default, Copy, Clone)]
 pub struct AskLevel {
     pub price: f64,

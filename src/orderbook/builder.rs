@@ -5,18 +5,24 @@ use crate::exchanges::{binance::Binance, bitstamp::Bitstamp, Exchange, ExchangeT
 
 use super::Orderbook;
 
-
 pub trait OrderbookBuilderState {}
+
+/// The builder's initial state
 pub struct Empty {}
 impl OrderbookBuilderState for Empty {}
-
+/// The builder must provide a `max_depth` first
 pub struct WithMaxDepth {}
 impl OrderbookBuilderState for WithMaxDepth {}
+
+/// The builder must provide a `symbol` second
 pub struct WithSymbol {}
 impl OrderbookBuilderState for WithSymbol {}
+
+/// The builder must finally provide a collection of `ExchangeType` before calling `.build()`
 pub struct WithExchange {}
 impl OrderbookBuilderState for WithExchange {}
 
+/// A builder that implements the Typestate pattern to construct Orderbooks.
 pub struct OrderbookBuilder<State: OrderbookBuilderState> {
     exchanges: HashMap<ExchangeType, Box<dyn Exchange + Send + Sync>>,
     symbol: String,
@@ -75,6 +81,9 @@ impl OrderbookBuilder<WithSymbol> {
 }
 
 impl OrderbookBuilder<WithExchange> {
+    /// Can only be called on fully constructed OrderbookBuilder.
+    ///
+    /// Returns an `Orderbook` where you can call `.collect()` to start streaming events
     pub async fn build<T: Orderbook>(self) -> Result<T, Box<dyn Error>> {
         let mut exchange_streams = StreamMap::new();
         for (name, exchange) in &self.exchanges {
