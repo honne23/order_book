@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, hash::{Hash, Hasher}};
 
 use crate::exchanges::ExchangeType;
 
@@ -8,6 +8,12 @@ pub struct BidLevel {
     pub price: f64,
     pub amount: f64,
     pub exchange: ExchangeType,
+}
+
+impl Hash for BidLevel {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        format!("{}|{}|{}", self.price, self.amount, self.exchange.to_string()).hash(state)
+    }
 }
 
 impl Ord for BidLevel {
@@ -24,7 +30,7 @@ impl PartialOrd for BidLevel {
 
 impl PartialEq for BidLevel {
     fn eq(&self, other: &Self) -> bool {
-        self.price / self.amount == other.price / other.amount
+        self.price / self.amount == other.price / other.amount && self.exchange == other.exchange
     }
 }
 
@@ -36,6 +42,12 @@ pub struct AskLevel {
     pub price: f64,
     pub amount: f64,
     pub exchange: ExchangeType,
+}
+
+impl Hash for AskLevel {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        format!("{}|{}|{}", self.price, self.amount, self.exchange.to_string()).hash(state)
+    }
 }
 
 impl Ord for AskLevel {
@@ -52,7 +64,7 @@ impl PartialOrd for AskLevel {
 
 impl PartialEq for AskLevel {
     fn eq(&self, other: &Self) -> bool {
-        self.amount / self.price == other.amount / other.price
+        self.amount / self.price == other.amount / other.price && self.exchange == other.exchange
     }
 }
 

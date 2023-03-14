@@ -12,8 +12,6 @@ enum Exchange {
 
 
 message Empty {
-    string symbol = 1;
-    repeated Exchange exchanges = 2;
 }
 
 message Summary {

@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use std::{env, error::Error};
+use std::error::Error;
 
 use clap::Parser;
 use orderbook::exchanges::ExchangeType;
@@ -15,6 +15,8 @@ use tonic::transport::Server;
 async fn main() -> Result<(), Box<dyn Error>> {
     pretty_env_logger::init();
     let args = Args::parse();
+
+    // Ensure arguments are valid
     let addr = format!("[::0]:{}",args.port).parse()?;
     if !(args.max_depth > 0) {
         return Err(CliError::MaxDepthNotGreaterThanZeroError.into())
@@ -23,7 +25,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     for exchange in args.exchanges {
         exchanges.push(ExchangeType::from_str(&exchange)?);
     }
+    // Supply the orderbook server with arguments
     let orderbook_server = OrderbookSummaryService::new(args.symbol, args.max_depth, &exchanges);
+    
+    // Run server
     Server::builder()
         .add_service(OrderbookAggregatorServer::new(orderbook_server))
         .serve(addr)
