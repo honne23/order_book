@@ -5,8 +5,6 @@ use std::{error::Error, num::ParseFloatError, pin::Pin};
 use async_trait::async_trait;
 use async_tungstenite::{stream::Stream, tokio::TokioAdapter, WebSocketStream};
 
-
-use std::fmt::Display;
 use serde::{de, Deserialize, Deserializer};
 
 use tokio::net::TcpStream;
