@@ -16,7 +16,21 @@ use crate::orderbook::{
     Orderbook,
 };
 
-pub struct OrderbookSummaryService {}
+pub struct OrderbookSummaryService {
+    max_depth: usize,
+    symbol: String,
+    exchanges: Vec<ExchangeType>
+}
+
+impl OrderbookSummaryService {
+    pub fn new<S: Into<String>>(symbol: S, max_depth:usize, exchanges: &[ExchangeType]) -> Self {
+        Self { 
+            symbol: symbol.into(),
+            max_depth,
+            exchanges: exchanges.into()
+         }
+    }
+}
 
 #[tonic::async_trait]
 impl OrderbookAggregator for OrderbookSummaryService {
@@ -29,9 +43,9 @@ impl OrderbookAggregator for OrderbookSummaryService {
         let (tx, rx) = mpsc::unbounded_channel::<Result<Summary, Status>>();
         let orderbook_builder = OrderbookBuilder::<EmptyOrderbook>::new();
         let orderbook_builder = orderbook_builder
-            .with_max_depth(10)
-            .with_symbol("ethbtc")
-            .with_exchanges(&[ExchangeType::Binance, ExchangeType::Bitstamp]);
+            .with_max_depth(self.max_depth)
+            .with_symbol(self.symbol.clone())
+            .with_exchanges(&self.exchanges);
 
         let mut orderbook = match orderbook_builder.build::<HeapedBook>().await {
             Ok(orderbook) => orderbook,

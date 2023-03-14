@@ -1,21 +1,16 @@
 use async_stream::stream;
 use futures::Stream;
 use std::{cmp::Reverse, collections::BinaryHeap, error::Error, mem};
-use thiserror::Error;
 use tokio_stream::{StreamExt, StreamMap};
 
-use crate::exchanges::{ExchangeType, SnapshotStream};
+use crate::{exchanges::{ExchangeType, SnapshotStream}, orderbook::OrderbookError};
 
 use super::{
     levels::{AskLevel, BidLevel},
     Orderbook,
 };
 
-#[derive(Error, Debug)]
-enum OrderbookError {
-    #[error("a stream has unexpectedly closed")]
-    StreamCancelled,
-}
+
 
 pub struct HeapedBook {
     max_depth: usize,

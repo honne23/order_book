@@ -3,11 +3,17 @@ pub(crate) mod levels;
 pub mod streaming_book;
 
 use std::error::Error;
-
+use thiserror::Error;
 use futures::Stream;
 use tokio_stream::StreamMap;
 
 use crate::exchanges::{ExchangeType, SnapshotStream};
+
+#[derive(Error, Debug)]
+enum OrderbookError {
+    #[error("a stream has unexpectedly closed")]
+    StreamCancelled,
+}
 
 pub trait Orderbook {
     /// A sortable type representing bids
@@ -58,14 +64,7 @@ mod tests {
         pin_mut!(orderbook_stream); // needed for iteration
 
         while let Some(value) = orderbook_stream.next().await {
-            assert!(value.is_ok());
-            let orders = match value {
-                Ok(orders) => orders,
-                Err(e) => {
-                    println!("ERROR {:?}", e);
-                    continue;
-                }
-            };
+            let orders = value.unwrap();
             let spread = orders.1[0].price - orders.0[0].price;
             assert!(orders.0.len() == 10);
             assert!(orders.1.len() == 10);

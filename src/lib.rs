@@ -3,6 +3,7 @@
 pub mod exchanges;
 pub mod orderbook;
 pub mod server;
+pub mod cli;
 
 #[macro_use]
 extern crate log;

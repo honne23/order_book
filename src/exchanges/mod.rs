@@ -1,4 +1,5 @@
 use std::hash::Hash;
+use std::str::FromStr;
 use std::{error::Error, num::ParseFloatError, pin::Pin};
 
 use async_trait::async_trait;
@@ -12,6 +13,8 @@ use tokio_stream::Stream as TokioStream;
 
 use futures::stream::SplitStream;
 
+use thiserror::Error as CustomError;
+
 pub mod binance;
 pub mod bitstamp;
 
@@ -21,6 +24,13 @@ type SecureWebsocketReceiver = SplitStream<
 
 pub(crate) type SnapshotStream =
     Pin<Box<dyn TokioStream<Item = Result<FeedSnapshot, Box<dyn Error + Send + Sync>>> + Send>>;
+
+#[derive(CustomError, Debug)]
+pub enum ExchangeTypeError {
+    #[error("provided type is unrecognised")]
+    UnknownTypeError,
+}
+
 
 #[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ExchangeType {
@@ -36,6 +46,18 @@ impl ToString for ExchangeType {
             Self::Binance => String::from("Binance"),
             Self::Bitstamp => String::from("Bitstamp"),
             Self::Default => String::from("Default"),
+        }
+    }
+}
+
+impl FromStr for ExchangeType {
+    type Err = ExchangeTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "binance" => Ok(ExchangeType::Binance),
+            "bitstamp" => Ok(ExchangeType::Bitstamp),
+            _ => Err(ExchangeTypeError::UnknownTypeError)
         }
     }
 }
