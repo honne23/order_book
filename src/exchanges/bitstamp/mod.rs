@@ -18,7 +18,7 @@ pub struct Bitstamp {}
 
 #[async_trait]
 impl Exchange for Bitstamp {
-    async fn connect(&self, symbol: String) -> Result<SnapshotStream, Box<dyn Error>> {
+    async fn connect(&self, symbol: String, max_depth: usize) -> Result<SnapshotStream, Box<dyn Error>> {
         let (mut ws_stream, _) = connect_async(EXCHANGE_URL).await?;
         ws_stream
             .send(Message::text(format!(

@@ -87,7 +87,7 @@ impl OrderbookBuilder<WithExchange> {
     pub async fn build<T: Orderbook>(self) -> Result<T, Box<dyn Error>> {
         let mut exchange_streams = StreamMap::new();
         for (name, exchange) in &self.exchanges {
-            exchange_streams.insert(*name, exchange.connect(self.symbol.clone()).await?);
+            exchange_streams.insert(*name, exchange.connect(self.symbol.clone(), self.max_depth).await?);
         }
         Ok(T::new(self.max_depth, exchange_streams))
     }

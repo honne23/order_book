@@ -12,8 +12,8 @@ pub(crate) struct Binance {}
 
 #[async_trait]
 impl Exchange for Binance {
-    async fn connect(&self, symbol: String) -> Result<SnapshotStream, Box<dyn Error>> {
-        let (ws_stream, _) = connect_async(format!("{EXCHANGE_URL}{symbol}@depth20@100ms")).await?;
+    async fn connect(&self, symbol: String, max_depth: usize) -> Result<SnapshotStream, Box<dyn Error>> {
+        let (ws_stream, _) = connect_async(format!("{EXCHANGE_URL}{symbol}@depth{max_depth}@100ms")).await?;
 
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<
             Result<FeedSnapshot, Box<dyn Error + Sync + Send>>,
