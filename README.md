@@ -31,9 +31,9 @@ Both bids and asks are ordered by the *best deal first*, facilitated by the `Ord
 This means `AskLevel` is ordered by `amount` / `price` (greater = better deal) and `BidLevel` is 
 ordered by `price` / `amount` (greater = better deal).
 
-The algorithm tracks the asks and bids individually in a HashSet, and if the order has not already been recorded, it is
-inserted into the appropriate binary *min-heap*. If the number of elements in the binary heap exceeds the `max_depth`, the smallest
-item is popped and removed from the heap, retaining only the best deals at the top.
+The algorithm tracks the asks and bids individually in a `HashSet`, and if the order has not already been recorded, it is
+inserted into the appropriate *min-`BinaryHeap`*. If the number of elements in the binary heap exceeds the `max_depth`, the smallest
+item is popped and removed from the heap, retaining only the best deals.
 
 ```rust
 pub struct HashHeap<T> where T: Ord + Hash + Copy + Clone {
