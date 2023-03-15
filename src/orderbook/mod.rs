@@ -1,6 +1,7 @@
 pub mod builder;
 pub(crate) mod levels;
 pub mod streaming_book;
+mod hash_heap;
 
 use std::error::Error;
 use thiserror::Error;
