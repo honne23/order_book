@@ -21,6 +21,7 @@ pub trait Orderbook {
     type BidOrder: Ord;
     /// A sortable type representing asks
     type AskOrder: Ord;
+    
 
     /// Used to construct the orderbook within the orderbook builder.
     fn new(max_depth: usize, exchanges: StreamMap<ExchangeType, SnapshotStream>) -> Self;

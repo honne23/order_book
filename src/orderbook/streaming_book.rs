@@ -1,6 +1,6 @@
 use async_stream::stream;
 use futures::Stream;
-use std::{cmp::Reverse, collections::{BinaryHeap, HashSet}, error::Error, mem};
+use std::{cmp::Reverse, error::Error, mem};
 use tokio_stream::{StreamExt, StreamMap};
 
 use crate::{exchanges::{ExchangeType, SnapshotStream}, orderbook::{OrderbookError, hash_heap::HashHeap}};

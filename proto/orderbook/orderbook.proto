@@ -5,26 +5,17 @@ service OrderbookAggregator {
     rpc BookSummary(Empty) returns (stream Summary);
 }
 
-enum Exchange {
-    BINANCE = 0;
-    BITSTAMP = 1;
-}
-
-
 message Empty {
 }
 
 message Summary {
-
     double spread = 1;
     repeated Level bids = 2;
     repeated Level asks = 3;
 }
 
 message Level {
-
     string exchange = 1;
     double price = 2;
     double amount = 3;
-    
 }

@@ -5,8 +5,15 @@ use async_tungstenite::{tokio::connect_async, tungstenite::Message};
 use futures::{stream::StreamExt, SinkExt};
 
 use serde::Deserialize;
+use thiserror::Error;
 
 use super::{Exchange, ExchangeType, FeedSnapshot, SecureWebsocketReceiver, SnapshotStream};
+
+#[derive(Error, Debug)]
+enum BitstampError {
+    #[error("Bitstamp could not successfully connect to the websocket endpoint")]
+    StreamFailed,
+}
 
 static EXCHANGE_URL: &str = "wss://ws.bitstamp.net";
 
@@ -14,6 +21,12 @@ static EXCHANGE_URL: &str = "wss://ws.bitstamp.net";
 struct BitstampSnapshot {
     pub data: FeedSnapshot,
 }
+
+#[derive(Deserialize, Debug)]
+struct BitstampConnectResponse {
+    event: String
+}
+
 pub struct Bitstamp {}
 
 #[async_trait]
@@ -35,6 +48,10 @@ impl Exchange for Bitstamp {
         let msg = futures::StreamExt::next(&mut ws_stream)
             .await
             .ok_or("didn't receive anything")??;
+        let data: BitstampConnectResponse = serde_json::from_str(msg.to_string().as_str())?;
+        if data.event.as_str() != "bts:subscription_succeeded" {
+            return Err(BitstampError::StreamFailed.into())
+        }
         // Check the msg here
         let (_, mut ws_receiver) = ws_stream.split();
         

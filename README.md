@@ -116,3 +116,29 @@ Example usage:
 ```
 ./target/release/orderbook -p 50051 -e binance,bitstamp -m 10 -s ethbtc
 ```
+
+
+### Further improvements
+
+##### The `Exchange` trait
+The `Exchange` trait could be refactored to decouple the network connection from the implementation in order to make testing easier,
+likely as some sort of generic associative type. This way tests can be carried out without depending on a network connection.
+
+##### The `HashHeap`
+The HashHeap could potentially be refactored into a data structure that does not need to maintain multiple copies of the same `FeedSnapshot`
+and instead works as follows:
+1. Maintain the value of the `FeedSnapshot` in the binary heap.
+2. Maintain a unique reference to the `FeedSnapshot` in the HashSet instead.
+Achieving this could require some explicit lifetime definitions to guide the borrow checker, and ensure the references are threadsafe.
+
+
+##### CI / CD
+Adding CI / CD to carry out `cargo test` and `cargo clippy` would help to keep the repository healthy and avoid breaking changes being commited to master.
+
+
+##### Use of `feature(return_position_impl_trait_in_trait)`
+This experiemental feature had to be switched on in order to correctly define the `.collect()` function on the `Orderbook` (returning `impl Stream`). 
+Otherwise the function would have to return a trait object instead, resulting in an additional heap allocation. This did not break compilation at this time
+but should be duly noted. 
+
+The alternative was to define an associated type on the `Orderbook` trait, however the experimental feature require to enable this (`impl-trait-existential-types`) resulted in an intellisense failure, with the language server marking the type as `Unknown`. Given these options, I felt it would be best to proced with the elected experimental feature in order to guide the programmer during development and avoid potentially undefined behaviour.
