@@ -19,6 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Ensure arguments are valid
     let addr = format!("[::0]:{}",args.port).parse()?;
     if !(args.max_depth > 0) {
+        // Might have restrictions on the exchange
         return Err(CliError::MaxDepthNotGreaterThanZeroError.into())
     }
     let mut exchanges : Vec<ExchangeType> = Vec::with_capacity(args.exchanges.len());

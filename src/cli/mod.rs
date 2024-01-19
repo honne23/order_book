@@ -11,7 +11,7 @@ pub enum CliError {
 
 
 
-/// A program that merges the orderbooks from multiple exchanges, the CLI is used to configure rhe GRPC server :)
+/// A program that merges the orderbooks from multiple exchanges, the CLI is used to configure the GRPC server :)
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {

@@ -28,8 +28,8 @@ made available to the client; hence even if one exchange connection fails, the s
 
 ### Ordering algorithm
 Both bids and asks are ordered by the *best deal first*, facilitated by the `Ord` trait.
-This means `AskLevel` is ordered by `amount` / `price` (greater = better deal) and `BidLevel` is 
-ordered by `price` / `amount` (greater = better deal).
+This means `AskLevel` is ordered by lowest `price` first and `BidLevel` is 
+ordered by highest `price`  first.
 
 The algorithm tracks the asks and bids individually in a `HashSet`, and if the order has not already been recorded, it is
 inserted into the appropriate *min-`BinaryHeap`*. If the number of elements in the binary heap exceeds the `max_depth`, the smallest

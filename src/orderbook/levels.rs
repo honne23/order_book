@@ -12,13 +12,13 @@ pub struct BidLevel {
 
 impl Hash for BidLevel {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        format!("{}|{}|{}", self.price, self.amount, self.exchange.to_string()).hash(state)
+        format!("Price: {} | Amount: {}| Exchange: {}", self.price, self.amount, self.exchange.to_string()).hash(state)
     }
 }
 
 impl Ord for BidLevel {
     fn cmp(&self, other: &Self) -> Ordering {
-        (self.price / self.amount).total_cmp(&(other.price / other.amount))
+        self.price.total_cmp(&other.price)
     }
 }
 
@@ -30,7 +30,7 @@ impl PartialOrd for BidLevel {
 
 impl PartialEq for BidLevel {
     fn eq(&self, other: &Self) -> bool {
-        self.price / self.amount == other.price / other.amount && self.exchange == other.exchange
+        self.price  == other.price  && self.exchange == other.exchange
     }
 }
 
@@ -46,13 +46,13 @@ pub struct AskLevel {
 
 impl Hash for AskLevel {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        format!("{}|{}|{}", self.price, self.amount, self.exchange.to_string()).hash(state)
+        format!("Price: {} | Amount: {}| Exchange: {}", self.price, self.amount, self.exchange.to_string()).hash(state)
     }
 }
 
 impl Ord for AskLevel {
     fn cmp(&self, other: &Self) -> Ordering {
-        (self.amount / self.price).total_cmp(&(other.amount / other.price))
+        (-self.price).total_cmp(&(-other.price))
     }
 }
 
@@ -64,7 +64,7 @@ impl PartialOrd for AskLevel {
 
 impl PartialEq for AskLevel {
     fn eq(&self, other: &Self) -> bool {
-        self.amount / self.price == other.amount / other.price && self.exchange == other.exchange
+        self.price == other.price && self.exchange == other.exchange
     }
 }
 
